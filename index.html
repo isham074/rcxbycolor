@@ -1,0 +1,83 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Color Prediction Game</title>
+  <style>
+    body { font-family: Arial; background: #121212; color: #fff; text-align: center; padding: 40px; }
+    input, button { padding: 10px; margin: 10px; font-size: 16px; }
+    .colors button { padding: 15px 30px; margin: 10px; font-size: 18px; border: none; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>Color Prediction Game</h1>
+  <div id="login-section">
+    <input type="text" id="username" placeholder="Enter username"/>
+    <button onclick="login()">Login</button>
+  </div>
+  <div id="game-section" style="display:none;">
+    <p>Welcome, <span id="userDisplay"></span> | Balance: <span id="balance">0</span> BDT</p>
+    <p>Next round in <span id="timer">30</span>s</p>
+    <div class="colors">
+      <button style="background:red; color:white;" onclick="play('Red')">Red</button>
+      <button style="background:green; color:white;" onclick="play('Green')">Green</button>
+      <button style="background:purple; color:white;" onclick="play('Violet')">Violet</button>
+    </div>
+    <p id="result"></p>
+  </div>
+<script>
+let username = "";
+let timer = 30;
+let canPlay = false;
+
+function login() {
+  username = document.getElementById('username').value.trim();
+  if (!username) return;
+  fetch('/login', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ username })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('game-section').style.display = 'block';
+    document.getElementById('userDisplay').textContent = username;
+    document.getElementById('balance').textContent = data.balance;
+    startTimer();
+  });
+}
+
+function startTimer() {
+  setInterval(() => {
+    timer--;
+    document.getElementById('timer').textContent = timer;
+    if (timer === 0) {
+      canPlay = true;
+      timer = 30;
+    }
+  }, 1000);
+}
+
+function play(color) {
+  if (!canPlay) {
+    document.getElementById('result').textContent = 'Wait for the next round!';
+    return;
+  }
+  canPlay = false;
+  fetch('/play', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ username, color })
+  })
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById('balance').textContent = data.balance;
+    document.getElementById('result').textContent = data.message;
+  });
+}
+</script>
+</body>
+</html>
